@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { RepBadge } from "@/components/rep-badge";
 import { GoalCard } from "@/components/goal-card";
 import { CollectibleCard } from "@/components/collectible-card";
@@ -17,15 +17,71 @@ import {
 interface HomeScreenProps {
   collection: Collectible[];
   onSelectGoal: (goal: Goal) => void;
+  userId?: string; // Optional userId to check for nudges
 }
 
-export function HomeScreen({ collection, onSelectGoal }: HomeScreenProps) {
+export function HomeScreen({ collection, onSelectGoal, userId }: HomeScreenProps) {
   const [tab, setTab] = useState<"goals" | "collection">("goals");
   const achievedIds = new Set(collection.map(c => c.goalId));
+
+  // Check for parent nudge
+  const [showNudge, setShowNudge] = useState(false);
+
+  useEffect(() => {
+    if (userId) {
+      const nudgeKey = `finteiy-nudge-${userId}`;
+      const nudgeTime = localStorage.getItem(nudgeKey);
+
+      if (nudgeTime) {
+        const timeSinceNudge = Date.now() - parseInt(nudgeTime);
+        // Show nudge if it's less than 24 hours old
+        if (timeSinceNudge < 24 * 60 * 60 * 1000) {
+          setShowNudge(true);
+        } else {
+          localStorage.removeItem(nudgeKey);
+        }
+      }
+    }
+  }, [userId]);
+
+  const dismissNudge = () => {
+    if (userId) {
+      localStorage.removeItem(`finteiy-nudge-${userId}`);
+      setShowNudge(false);
+    }
+  };
 
   return (
     <div className="min-h-screen p-7 pb-4 font-dm-sans">
       <div className="max-w-game mx-auto">
+        {/* Parent Nudge */}
+        {showNudge && (
+          <div
+            className="rounded-xl px-4 py-3 mb-5 flex items-center gap-3"
+            style={{
+              background: "rgba(255,215,0,0.08)",
+              border: "1px solid rgba(255,215,0,0.2)",
+              boxShadow: "0 0 16px rgba(255,215,0,0.1)",
+            }}
+          >
+            <span className="text-xl">{"\u{1F44B}"}</span>
+            <div className="flex-1">
+              <div className="text-[13px] font-bold text-text-primary font-sora">
+                Your parent sent you a nudge!
+              </div>
+              <div className="text-[11px] text-text-muted">
+                Time to pick a new goal and start playing
+              </div>
+            </div>
+            <button
+              onClick={dismissNudge}
+              className="text-sm text-text-muted hover:text-text-primary transition-colors"
+            >
+              {"\u00D7"}
+            </button>
+          </div>
+        )}
+
         {/* Header */}
         <div className="text-center mb-5">
           <div className="text-[13px] text-text-muted tracking-[0.15em] uppercase mb-1.5 font-space-mono">

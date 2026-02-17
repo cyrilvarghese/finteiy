@@ -5,6 +5,13 @@ import type { AppUser } from "@/lib/auth";
 import { useCollection } from "@/hooks/use-collection";
 import { useRewards } from "@/hooks/use-rewards";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   GOALS,
   SAMPLE_COLLECTIBLES,
   getGrade,
@@ -37,6 +44,19 @@ export function ParentDashboard({ user, onLogout }: ParentDashboardProps) {
   // Custom reward form state
   const [selectedGoalId, setSelectedGoalId] = useState("");
   const [rewardText, setRewardText] = useState("");
+
+  // Nudge state
+  const [nudgeSent, setNudgeSent] = useState(false);
+
+  const handleSendNudge = () => {
+    // Store nudge timestamp in localStorage
+    const nudgeKey = `finteiy-nudge-${childId}`;
+    localStorage.setItem(nudgeKey, Date.now().toString());
+    setNudgeSent(true);
+
+    // Reset nudge sent state after 3 seconds
+    setTimeout(() => setNudgeSent(false), 3000);
+  };
 
   // Get most recent 3 achievements
   const recentAchievements = [...collection]
@@ -95,72 +115,102 @@ export function ParentDashboard({ user, onLogout }: ParentDashboardProps) {
 
         {/* Dashboard cards */}
         <div className="flex flex-col gap-4">
-          {/* 1. Active Goal Card */}
+          {/* 1. Active Goal Card - Prominent with gold accent */}
           <div
-            className="rounded-xl px-5 py-4"
+            className="rounded-2xl px-6 py-5"
             style={{
-              background: "rgba(255,255,255,0.03)",
-              border: "1px solid rgba(255,255,255,0.08)",
+              background: "linear-gradient(135deg, rgba(255,215,0,0.06), rgba(255,215,0,0.02))",
+              border: "1.5px solid rgba(255,215,0,0.15)",
+              boxShadow: "0 0 20px rgba(255,215,0,0.08)",
             }}
           >
-            <div className="flex items-center gap-2 mb-3">
-              <span className="text-lg">{"\u{1F3AF}"}</span>
-              <h2 className="text-[15px] font-bold font-sora text-text-primary">Current Goal</h2>
+            <div className="flex items-center gap-2.5 mb-3">
+              <div
+                className="w-10 h-10 rounded-xl flex items-center justify-center"
+                style={{
+                  background: "linear-gradient(145deg, rgba(255,215,0,0.2), rgba(255,215,0,0.08))",
+                  border: "1px solid rgba(255,215,0,0.25)",
+                }}
+              >
+                <span className="text-xl">{"\u{1F3AF}"}</span>
+              </div>
+              <h2 className="text-[16px] font-extrabold font-sora text-text-primary">Current Goal</h2>
             </div>
-            <div className="text-xs text-text-muted">
+            <div className="text-xs text-text-muted mb-4">
               No active goal • Encourage them to start playing!
             </div>
+
+            {/* Send nudge button */}
+            <button
+              onClick={handleSendNudge}
+              disabled={nudgeSent}
+              className="w-full px-4 py-3 rounded-xl text-[14px] font-bold font-sora cursor-pointer transition-all disabled:opacity-50"
+              style={{
+                background: nudgeSent
+                  ? "rgba(34,197,94,0.12)"
+                  : "linear-gradient(135deg, rgba(255,215,0,0.2), rgba(255,215,0,0.1))",
+                border: nudgeSent
+                  ? "1px solid rgba(34,197,94,0.25)"
+                  : "1px solid rgba(255,215,0,0.3)",
+                color: nudgeSent ? "#22c55e" : "#fbbf24",
+              }}
+            >
+              {nudgeSent ? "✓ Nudge Sent!" : "📱 Send Nudge"}
+            </button>
           </div>
 
-          {/* 2. Recent Achievements Card */}
+          {/* 2. Recent Achievements Card - Darker, cleaner */}
           <div
             className="rounded-xl px-5 py-4"
             style={{
-              background: "rgba(255,255,255,0.03)",
-              border: "1px solid rgba(255,255,255,0.08)",
+              background: "rgba(0,0,0,0.25)",
+              border: "1px solid rgba(255,255,255,0.06)",
             }}
           >
-            <div className="flex items-center gap-2 mb-3">
-              <span className="text-lg">{"\u{1F3C6}"}</span>
+            <div className="flex items-center gap-2 mb-4">
+              <span className="text-xl">{"\u{1F3C6}"}</span>
               <h2 className="text-[15px] font-bold font-sora text-text-primary">Recent Achievements</h2>
             </div>
 
             {recentAchievements.length === 0 ? (
               <div className="text-xs text-text-muted">No completed goals yet</div>
             ) : (
-              <div className="flex flex-col gap-2.5">
-                {recentAchievements.map((achievement) => {
+              <div className="flex flex-col gap-3">
+                {recentAchievements.map((achievement, idx) => {
                   const goal = GOALS.find((g) => g.id === achievement.goalId);
                   const reward = getReward(achievement.goalId);
 
                   return (
                     <div
                       key={achievement.date}
-                      className="flex items-center gap-3 rounded-lg px-3 py-2.5"
+                      className="flex items-center gap-3"
                       style={{
-                        background: "rgba(255,255,255,0.02)",
-                        border: "1px solid rgba(255,255,255,0.04)",
+                        paddingBottom: idx < recentAchievements.length - 1 ? "12px" : "0",
+                        borderBottom: idx < recentAchievements.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none",
                       }}
                     >
-                      <div className="text-xl">{goal?.emoji}</div>
+                      <div className="text-2xl">{goal?.emoji}</div>
                       <div className="flex-1 min-w-0">
-                        <div className="text-[13px] font-bold text-text-primary font-sora">
+                        <div className="text-[14px] font-bold text-text-primary font-sora mb-0.5">
                           {goal?.name}
                         </div>
                         <div className="text-[11px] text-text-muted font-space-mono">
-                          Grade: {achievement.grade} • {achievement.days} days
+                          {achievement.days} days
                           {reward && ` • 🎁 ${reward}`}
                         </div>
                       </div>
                       <div
-                        className="px-2 py-0.5 rounded text-[11px] font-bold font-space-mono"
+                        className="px-2.5 py-1 rounded-lg text-[13px] font-extrabold font-sora"
                         style={{
                           background: achievement.grade === "A" || achievement.grade === "B"
-                            ? "rgba(34,197,94,0.1)"
-                            : "rgba(251,191,36,0.1)",
+                            ? "rgba(34,197,94,0.15)"
+                            : "rgba(251,191,36,0.15)",
                           color: achievement.grade === "A" || achievement.grade === "B"
                             ? "#22c55e"
                             : "#fbbf24",
+                          boxShadow: achievement.grade === "A" || achievement.grade === "B"
+                            ? "0 0 8px rgba(34,197,94,0.1)"
+                            : "0 0 8px rgba(251,191,36,0.1)",
                         }}
                       >
                         {achievement.grade}
@@ -172,44 +222,44 @@ export function ParentDashboard({ user, onLogout }: ParentDashboardProps) {
             )}
           </div>
 
-          {/* 3. Learning Insights Card */}
+          {/* 3. Learning Insights Card - Grid layout with cyan accents */}
           <div
             className="rounded-xl px-5 py-4"
             style={{
-              background: "rgba(255,255,255,0.03)",
-              border: "1px solid rgba(255,255,255,0.08)",
+              background: "rgba(56,189,248,0.03)",
+              border: "1px dashed rgba(56,189,248,0.15)",
             }}
           >
-            <div className="flex items-center gap-2 mb-3">
-              <span className="text-lg">{"\u{1F4A1}"}</span>
+            <div className="flex items-center gap-2 mb-4">
+              <span className="text-xl">{"\u{1F4A1}"}</span>
               <h2 className="text-[15px] font-bold font-sora text-text-primary">Learning Insights</h2>
             </div>
 
-            <div className="flex flex-col gap-2">
+            <div className="grid grid-cols-1 gap-2.5">
               {CONCEPTS.map((concept) => {
                 const { grade, status } = getConceptStatus(concept.id as ConceptNumber);
 
                 return (
                   <div
                     key={concept.id}
-                    className="flex items-center justify-between px-3 py-2 rounded-lg"
+                    className="flex items-center justify-between px-3 py-2.5 rounded-lg"
                     style={{
-                      background: "rgba(255,255,255,0.02)",
-                      border: "1px solid rgba(255,255,255,0.04)",
+                      background: "rgba(255,255,255,0.03)",
+                      border: "none",
                     }}
                   >
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm">{concept.icon}</span>
-                      <span className="text-[12px] text-text-secondary">{concept.title}</span>
+                    <div className="flex items-center gap-2.5">
+                      <span className="text-base">{concept.icon}</span>
+                      <span className="text-[12px] text-text-secondary font-medium">{concept.title}</span>
                     </div>
                     <div
-                      className="px-2 py-0.5 rounded text-[10px] font-bold font-space-mono"
+                      className="px-2.5 py-1 rounded-md text-[10px] font-extrabold font-space-mono tracking-wide"
                       style={{
                         background: status === "Good"
-                          ? "rgba(34,197,94,0.1)"
+                          ? "rgba(34,197,94,0.15)"
                           : status === "Needs Work"
-                            ? "rgba(251,191,36,0.1)"
-                            : "rgba(148,163,184,0.1)",
+                            ? "rgba(251,191,36,0.15)"
+                            : "rgba(148,163,184,0.15)",
                         color: status === "Good"
                           ? "#22c55e"
                           : status === "Needs Work"
@@ -217,7 +267,7 @@ export function ParentDashboard({ user, onLogout }: ParentDashboardProps) {
                             : "#94a3b8",
                       }}
                     >
-                      {status}
+                      {status.toUpperCase()}
                     </div>
                   </div>
                 );
@@ -225,41 +275,46 @@ export function ParentDashboard({ user, onLogout }: ParentDashboardProps) {
             </div>
           </div>
 
-          {/* 4. Custom Rewards Card */}
+          {/* 4. Custom Rewards Card - Interactive with strong gold theme */}
           <div
-            className="rounded-xl px-5 py-4"
+            className="rounded-2xl px-5 py-5"
             style={{
-              background: "rgba(255,255,255,0.03)",
-              border: "1px solid rgba(255,255,255,0.08)",
+              background: "linear-gradient(135deg, rgba(255,215,0,0.08), rgba(255,170,0,0.03))",
+              border: "1px solid rgba(255,215,0,0.2)",
+              boxShadow: "0 0 16px rgba(255,215,0,0.1)",
             }}
           >
-            <div className="flex items-center gap-2 mb-3">
-              <span className="text-lg">{"\u{1F381}"}</span>
-              <h2 className="text-[15px] font-bold font-sora text-text-primary">Custom Rewards</h2>
+            <div className="flex items-center gap-2.5 mb-3">
+              <div
+                className="w-9 h-9 rounded-lg flex items-center justify-center"
+                style={{
+                  background: "rgba(255,215,0,0.15)",
+                }}
+              >
+                <span className="text-lg">{"\u{1F381}"}</span>
+              </div>
+              <div>
+                <h2 className="text-[15px] font-bold font-sora text-text-primary">Custom Rewards</h2>
+                <p className="text-[10px] text-text-muted leading-snug">
+                  Attach real-world surprises to goals
+                </p>
+              </div>
             </div>
-
-            <p className="text-[11px] text-text-muted mb-3 leading-relaxed">
-              Attach real-world rewards to goals. When {childName} wins, surprise them!
-            </p>
 
             {/* Add reward form */}
             <div className="flex flex-col gap-2 mb-4">
-              <select
-                value={selectedGoalId}
-                onChange={(e) => setSelectedGoalId(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg text-[13px] text-text-primary font-dm-sans outline-none"
-                style={{
-                  background: "rgba(255,255,255,0.05)",
-                  border: "1px solid rgba(255,255,255,0.1)",
-                }}
-              >
-                <option value="">Select a goal...</option>
-                {GOALS.filter((g) => g.tier === "Starter" || g.tier === "Medium").map((goal) => (
-                  <option key={goal.id} value={goal.id}>
-                    {goal.emoji} {goal.name} (${goal.amount})
-                  </option>
-                ))}
-              </select>
+              <Select value={selectedGoalId} onValueChange={setSelectedGoalId}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select a goal..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {GOALS.filter((g) => g.tier === "Starter" || g.tier === "Medium").map((goal) => (
+                    <SelectItem key={goal.id} value={goal.id}>
+                      {goal.emoji} {goal.name} (${goal.amount})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
 
               <div className="flex gap-2">
                 <input
@@ -276,42 +331,50 @@ export function ParentDashboard({ user, onLogout }: ParentDashboardProps) {
                 <button
                   onClick={handleAddReward}
                   disabled={!selectedGoalId || !rewardText.trim()}
-                  className="px-4 py-2 rounded-lg text-[13px] font-bold font-sora cursor-pointer transition-all disabled:opacity-30"
+                  className="px-5 py-2 rounded-xl text-[13px] font-extrabold font-sora cursor-pointer transition-all disabled:opacity-30 btn-game"
                   style={{
-                    background: "linear-gradient(135deg, rgba(255,215,0,0.2), rgba(255,215,0,0.1))",
-                    border: "1px solid rgba(255,215,0,0.3)",
+                    background: "linear-gradient(135deg, rgba(255,215,0,0.25), rgba(255,170,0,0.12))",
+                    border: "1.5px solid rgba(255,215,0,0.35)",
                     color: "#fbbf24",
+                    boxShadow: "0 0 12px rgba(255,215,0,0.15)",
                   }}
                 >
-                  Add
+                  + Add
                 </button>
               </div>
             </div>
 
             {/* Current rewards list */}
             {rewards.length > 0 && (
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-2.5 mt-4">
                 {rewards.map((r) => {
                   const goal = GOALS.find((g) => g.id === r.goalId);
                   return (
                     <div
                       key={r.goalId}
-                      className="flex items-center gap-2 px-3 py-2 rounded-lg"
+                      className="flex items-center gap-3 px-4 py-3 rounded-xl"
                       style={{
-                        background: "rgba(255,215,0,0.05)",
-                        border: "1px solid rgba(255,215,0,0.1)",
+                        background: "linear-gradient(135deg, rgba(255,215,0,0.08), rgba(255,215,0,0.03))",
+                        border: "1px solid rgba(255,215,0,0.15)",
                       }}
                     >
-                      <span className="text-sm">{goal?.emoji}</span>
+                      <div
+                        className="w-8 h-8 rounded-lg flex items-center justify-center"
+                        style={{
+                          background: "rgba(255,215,0,0.12)",
+                        }}
+                      >
+                        <span className="text-base">{goal?.emoji}</span>
+                      </div>
                       <div className="flex-1 min-w-0">
-                        <div className="text-[12px] font-bold text-text-primary">
+                        <div className="text-[13px] font-bold text-text-primary font-sora">
                           {goal?.name}
                         </div>
                         <div className="text-[11px] text-text-muted">{r.reward}</div>
                       </div>
                       <button
                         onClick={() => removeReward(r.goalId)}
-                        className="text-xs text-text-muted hover:text-red-400 transition-colors"
+                        className="w-6 h-6 rounded-full flex items-center justify-center text-xs text-text-muted hover:text-red-400 hover:bg-red-400/10 transition-all"
                       >
                         {"\u00D7"}
                       </button>

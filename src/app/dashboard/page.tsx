@@ -259,7 +259,11 @@ function DashboardContent() {
   return (
     <>
       {profileOverlay}
-      <HomeScreen collection={collection} onSelectGoal={handleGoalSelect} />
+      <HomeScreen
+        collection={collection}
+        onSelectGoal={handleGoalSelect}
+        userId={currentUser?.id}
+      />
     </>
   );
 }
