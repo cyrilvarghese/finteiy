@@ -39,3 +39,17 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# ide / editor
+.idea/
+.vscode/
+.claude/
+.cursor/
+
+# local
+*.local
