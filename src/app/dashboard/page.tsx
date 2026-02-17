@@ -157,6 +157,12 @@ function DashboardContent() {
     setScreen("home");
   }, []);
 
+  const handleQuitGoal = useCallback(() => {
+    setGoal(null);
+    setLesson(null);
+    setScreen("home");
+  }, []);
+
   if (!currentUser) {
     return null; // Loading or redirecting
   }
@@ -277,6 +283,7 @@ function DashboardContent() {
           goal={goal}
           lessonId={lesson?.id}
           onEnd={handleGameEnd}
+          onQuit={handleQuitGoal}
         />
       </>
     );

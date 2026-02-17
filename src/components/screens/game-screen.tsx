@@ -17,9 +17,10 @@ interface GameScreenProps {
   goal: Goal;
   lessonId?: ConceptNumber;
   onEnd: (state: GameState) => void;
+  onQuit?: () => void;
 }
 
-export function GameScreen({ goal, lessonId, onEnd }: GameScreenProps) {
+export function GameScreen({ goal, lessonId, onEnd, onQuit }: GameScreenProps) {
   const { state, handleAction } = useGameEngine(goal, onEnd, lessonId);
   const inv = state.currentInvite;
   const goalPct = clamp((state.cash / goal.amount) * 100, 0, 100);
@@ -109,7 +110,7 @@ export function GameScreen({ goal, lessonId, onEnd }: GameScreenProps) {
 
         {/* Action buttons - hidden when callout is showing */}
         {!state.gameOver && !state.callout && (
-          <div className="grid grid-cols-2 gap-2.5 pb-6">
+          <div className="grid grid-cols-2 gap-2.5">
             <ActionButton
               action="join"
               cost={inv?.cost || 0}
@@ -132,6 +133,23 @@ export function GameScreen({ goal, lessonId, onEnd }: GameScreenProps) {
               disabled={state.energy < 1 || !inv}
               onClick={() => handleAction("earn")}
             />
+          </div>
+        )}
+
+        {/* Quit button - separated from actions */}
+        {!state.gameOver && onQuit && (
+          <div className="mt-8 mb-6">
+            <button
+              onClick={onQuit}
+              className="w-full px-4 py-3 rounded-xl text-[14px] font-semibold font-dm-sans cursor-pointer transition-all"
+              style={{
+                background: "rgba(239,68,68,0.08)",
+                border: "1px solid rgba(239,68,68,0.2)",
+                color: "#ef4444",
+              }}
+            >
+              ← Quit & Choose New Goal
+            </button>
           </div>
         )}
 
