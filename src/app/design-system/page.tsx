@@ -52,16 +52,24 @@ function SubSection({
 }
 
 function Swatch({ name, value, className }: { name: string; value: string; className?: string }) {
+  const isLongValue = value.length > 12;
   return (
-    <div className="flex flex-col items-center gap-2">
+    <div className="flex flex-col items-center justify-center gap-1.5 w-full min-w-[4.5rem]">
       <div
-        className={`w-14 h-14 md:w-16 md:h-16 rounded-xl border border-white/10 shadow-lg ${className || ""}`}
+        className={`w-10 h-10 sm:w-12 sm:h-12 rounded-lg border border-white/10 shadow-md flex-shrink-0 mx-auto ${className || ""}`}
         style={{ background: value }}
       />
-      <span className="text-xs font-medium text-text-primary font-dm-sans text-center">
+      <span className="block w-full text-center text-xs font-medium text-text-primary font-dm-sans">
         {name}
       </span>
-      <span className="text-xs text-text-muted font-space-mono select-all">{value}</span>
+      <span
+        className={`block w-full text-center font-space-mono select-all ${
+          isLongValue ? "text-[11px] sm:text-xs leading-relaxed break-all" : "text-xs whitespace-nowrap"
+        } text-text-secondary`}
+        title={value}
+      >
+        {value}
+      </span>
     </div>
   );
 }
@@ -69,7 +77,7 @@ function Swatch({ name, value, className }: { name: string; value: string; class
 export default function DesignSystemPage() {
   return (
     <div className="min-h-screen p-6 md:p-10">
-      <div className="max-w-game mx-auto">
+      <div className="w-full max-w-5xl mx-auto">
         {/* Header */}
         <div className="text-center mb-14">
           <div className="text-sm text-text-muted tracking-[0.2em] uppercase font-space-mono mb-3">
@@ -86,7 +94,7 @@ export default function DesignSystemPage() {
         {/* ═══════ COLORS ═══════ */}
         <Section title="Colors">
           <SubSection title="Game Colors">
-            <div className="grid grid-cols-3 sm:grid-cols-6 gap-6">
+            <div className="grid grid-cols-3 sm:grid-cols-6 gap-x-8 gap-y-6">
               <Swatch name="Cash" value="#22C55E" />
               <Swatch name="Danger" value="#EF4444" />
               <Swatch name="Social" value="#38BDF8" />
@@ -97,7 +105,7 @@ export default function DesignSystemPage() {
           </SubSection>
 
           <SubSection title="Text Scale">
-            <div className="grid grid-cols-3 gap-6">
+            <div className="grid grid-cols-3 gap-x-8 gap-y-6">
               <Swatch name="Primary" value="#F1F5F9" />
               <Swatch name="Secondary" value="#94A3B8" />
               <Swatch name="Muted" value="#64748B" />
@@ -105,7 +113,7 @@ export default function DesignSystemPage() {
           </SubSection>
 
           <SubSection title="Grades">
-            <div className="grid grid-cols-5 gap-6">
+            <div className="grid grid-cols-5 gap-x-8 gap-y-6">
               <Swatch name="A" value="#22c55e" />
               <Swatch name="B" value="#86efac" />
               <Swatch name="C" value="#facc15" />
@@ -115,7 +123,7 @@ export default function DesignSystemPage() {
           </SubSection>
 
           <SubSection title="Rarity">
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-8 gap-y-6">
               <Swatch name="Epic" value="#00f5ff" />
               <Swatch name="Rare" value="#b866ff" />
               <Swatch name="Legendary" value="#ff6600" />
@@ -124,10 +132,10 @@ export default function DesignSystemPage() {
           </SubSection>
 
           <SubSection title="Surfaces">
-            <div className="grid grid-cols-3 gap-6">
-              <Swatch name="Card BG" value="rgba(255,255,255,0.03)" className="border-white/10" />
-              <Swatch name="Card Border" value="rgba(255,255,255,0.06)" className="border-white/10" />
-              <Swatch name="Card Hover" value="rgba(255,255,255,0.06)" className="border-white/10" />
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-x-8 gap-y-6">
+              <Swatch name="Card BG" value="rgba(255, 255, 255, 0.03)" className="border-white/10" />
+              <Swatch name="Card Border" value="rgba(255, 255, 255, 0.06)" className="border-white/10" />
+              <Swatch name="Card Hover" value="rgba(255, 255, 255, 0.06)" className="border-white/10" />
             </div>
           </SubSection>
         </Section>
