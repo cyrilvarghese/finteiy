@@ -395,70 +395,76 @@ export function OnboardingPlaceholder({ user, onContinue }: OnboardingPlaceholde
             Keep an eye on these 4 meters. They show how you&apos;re doing in the game.
           </p>
 
-          {/* Meter demos in 2x2 grid */}
-          <div className="w-full grid grid-cols-2 gap-3 mb-8">
-            <MeterBar
-              label="Cash"
-              value={150}
-              max={300}
-              color="#22c55e"
-              icon={"\u{1F4B5}"}
-              prefix="$"
-            />
-            <EnergyDots energy={2} />
-            <MeterBar
-              label="Social"
-              value={60}
-              max={100}
-              color="#38bdf8"
-              icon={"\u{1F465}"}
-            />
-            <MeterBar
-              label="Goal"
-              value={150}
-              max={300}
-              color={selectedGoal?.color || "#a855f7"}
-              icon={"\u{1F3AF}"}
-              prefix="$"
-            />
-          </div>
+          {/* Meters with explanations paired together */}
+          <div className="w-full flex flex-col gap-6 mb-8">
+            {/* Cash */}
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center gap-2.5">
+                <span className="text-2xl">{"\u{1F4B5}"}</span>
+                <h3 className="text-[20px] font-extrabold text-text-primary font-sora">Cash</h3>
+              </div>
+              <MeterBar
+                label="Cash"
+                value={150}
+                max={300}
+                color="#22c55e"
+                icon={"\u{1F4B5}"}
+                prefix="$"
+                hideLabel={true}
+              />
+              <div className="text-[12px] text-text-muted leading-relaxed">
+                Your money. Earn it, save it, spend it wisely.
+              </div>
+            </div>
 
-          {/* Explanations */}
-          <div className="w-full flex flex-col gap-2.5 mb-8">
-            <div className="flex gap-2.5 text-left">
-              <div className="text-lg shrink-0">{"\u{1F4B5}"}</div>
-              <div>
-                <div className="text-[13px] font-bold text-text-primary font-sora">Cash</div>
-                <div className="text-[11px] text-text-muted leading-relaxed">
-                  Your money. Earn it, save it, spend it wisely.
-                </div>
+            {/* Energy */}
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center gap-2.5">
+                <span className="text-2xl">{"\u26A1"}</span>
+                <h3 className="text-[20px] font-extrabold text-text-primary font-sora">Energy</h3>
+              </div>
+              <EnergyDots energy={2} hideLabel={true} />
+              <div className="text-[12px] text-text-muted leading-relaxed">
+                You get 3 per day. Each action costs energy.
               </div>
             </div>
-            <div className="flex gap-2.5 text-left">
-              <div className="text-lg shrink-0">{"\u26A1"}</div>
-              <div>
-                <div className="text-[13px] font-bold text-text-primary font-sora">Energy</div>
-                <div className="text-[11px] text-text-muted leading-relaxed">
-                  You get 3 per day. Each action costs energy.
-                </div>
+
+            {/* Social */}
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center gap-2.5">
+                <span className="text-2xl">{"\u{1F465}"}</span>
+                <h3 className="text-[20px] font-extrabold text-text-primary font-sora">Social</h3>
+              </div>
+              <MeterBar
+                label="Social"
+                value={60}
+                max={100}
+                color="#38bdf8"
+                icon={"\u{1F465}"}
+                hideLabel={true}
+              />
+              <div className="text-[12px] text-text-muted leading-relaxed">
+                Stay connected. Skipping hangs can hurt your social life.
               </div>
             </div>
-            <div className="flex gap-2.5 text-left">
-              <div className="text-lg shrink-0">{"\u{1F465}"}</div>
-              <div>
-                <div className="text-[13px] font-bold text-text-primary font-sora">Social</div>
-                <div className="text-[11px] text-text-muted leading-relaxed">
-                  Stay connected. Skipping hangs can hurt your social life.
-                </div>
+
+            {/* Goal */}
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center gap-2.5">
+                <span className="text-2xl">{"\u{1F3AF}"}</span>
+                <h3 className="text-[20px] font-extrabold text-text-primary font-sora">Goal</h3>
               </div>
-            </div>
-            <div className="flex gap-2.5 text-left">
-              <div className="text-lg shrink-0">{"\u{1F3AF}"}</div>
-              <div>
-                <div className="text-[13px] font-bold text-text-primary font-sora">Goal Progress</div>
-                <div className="text-[11px] text-text-muted leading-relaxed">
-                  How close you are to winning your goal.
-                </div>
+              <MeterBar
+                label="Goal"
+                value={150}
+                max={300}
+                color={selectedGoal?.color || "#a855f7"}
+                icon={"\u{1F3AF}"}
+                prefix="$"
+                hideLabel={true}
+              />
+              <div className="text-[12px] text-text-muted leading-relaxed">
+                How close you are to winning your goal.
               </div>
             </div>
           </div>
