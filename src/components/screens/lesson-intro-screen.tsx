@@ -6,12 +6,20 @@ import type { Lesson } from "@/lib/constants";
 interface LessonIntroScreenProps {
   lesson: Lesson;
   onStartLesson: () => void;
+  onBack: () => void;
 }
 
-export function LessonIntroScreen({ lesson, onStartLesson }: LessonIntroScreenProps) {
+export function LessonIntroScreen({ lesson, onStartLesson, onBack }: LessonIntroScreenProps) {
   return (
     <div className="min-h-screen px-6 py-10 font-dm-sans">
       <div className="max-w-game mx-auto">
+        {/* Back button */}
+        <button
+          onClick={onBack}
+          className="mb-6 text-[13px] text-text-secondary hover:text-text-primary transition-colors cursor-pointer flex items-center gap-1"
+        >
+          ← Back
+        </button>
         {/* Lesson Icon & Title */}
         <div className="text-center mb-8">
           <div

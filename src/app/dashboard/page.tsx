@@ -259,7 +259,11 @@ function DashboardContent() {
     return (
       <>
         {profileOverlay}
-        <LessonIntroScreen lesson={lesson} onStartLesson={handleStartLesson} />
+        <LessonIntroScreen
+          lesson={lesson}
+          onStartLesson={handleStartLesson}
+          onBack={() => setScreen("home")}
+        />
       </>
     );
   }
