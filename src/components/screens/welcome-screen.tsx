@@ -1,13 +1,16 @@
 "use client";
 
+import { useRouter } from "next/navigation";
+
 export type Persona = "teen" | "parent";
 
 interface WelcomeScreenProps {
-  onSelect: (persona: Persona) => void;
+  onSelect?: (persona: Persona) => void;
   onSignIn?: () => void;
 }
 
 export function WelcomeScreen({ onSelect, onSignIn }: WelcomeScreenProps) {
+  const router = useRouter();
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-6 py-10 font-dm-sans">
       <div className="max-w-game w-full flex flex-col items-center">
@@ -34,7 +37,7 @@ export function WelcomeScreen({ onSelect, onSignIn }: WelcomeScreenProps) {
         <div className="w-full flex flex-col gap-3 mb-8">
           {/* Parent */}
           <button
-            onClick={() => onSelect("parent")}
+            onClick={() => router.push("/login/parent")}
             className="w-full rounded-2xl px-5 py-4 text-left cursor-pointer transition-all duration-200 group"
             style={{
               background: "linear-gradient(135deg, rgba(255,215,0,0.08), rgba(255,170,0,0.04))",
@@ -67,7 +70,7 @@ export function WelcomeScreen({ onSelect, onSignIn }: WelcomeScreenProps) {
 
           {/* Teen */}
           <button
-            onClick={() => onSelect("teen")}
+            onClick={() => router.push("/login/teen")}
             className="w-full rounded-2xl px-5 py-4 text-left cursor-pointer transition-all duration-200 group"
             style={{
               background: "linear-gradient(135deg, rgba(0,245,255,0.08), rgba(56,189,248,0.04))",

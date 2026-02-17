@@ -5,6 +5,7 @@
 - Do NOT create custom controls unless the required component does not exist in shadcn/ui.
 - Install new shadcn components via `npx shadcn@latest add <component-name>`.
 - Existing shadcn components are in `src/components/ui/`.
+- **Componentize where needed**: Extract reusable UI patterns into separate components to avoid duplication and improve maintainability. Look for repeated patterns in cards, lists, and form elements.
 
 ## Styling
 - Use **Tailwind CSS v3** utility classes for all styling.

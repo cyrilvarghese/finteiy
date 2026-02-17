@@ -1,54 +1,35 @@
 "use client";
 
-import { useState, useEffect, type FormEvent } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
+import { useState, type FormEvent } from "react";
 import { authenticate, type AppUser, type UserRole } from "@/lib/auth";
 import { type Persona } from "@/components/screens/welcome-screen";
 
-interface LoginScreenProps {
-  /** null when arriving via "Sign In" link (no role filter) */
-  persona: Persona | null;
-  onLogin: (user: AppUser) => void;
-  onBack: () => void;
-}
-
-// Pre-fill credentials based on persona for demo convenience
+// Pre-fill credentials based on role for demo convenience
 const PREFILL: Record<string, { username: string; password: string }> = {
   parent: { username: "parent", password: "finteiy2024" },
-  teen:   { username: "jordan", password: "goal456" },
+  teen: { username: "jordan", password: "goal456" },
 };
 
-export function LoginScreen({ persona, onLogin, onBack }: LoginScreenProps) {
-  const searchParams = useSearchParams();
+export default function LoginPage() {
   const router = useRouter();
+  const params = useParams();
+  const role = params.role as Persona;
 
-  // Initialize persona from URL param or prop
-  const urlRole = searchParams.get("role") as Persona | null;
-  const effectivePersona = urlRole || persona;
-
-  const prefill = effectivePersona ? PREFILL[effectivePersona] : undefined;
+  const prefill = role && PREFILL[role] ? PREFILL[role] : undefined;
   const [username, setUsername] = useState(prefill?.username ?? "");
   const [password, setPassword] = useState(prefill?.password ?? "");
   const [error, setError] = useState<string | null>(null);
 
-  // Sync URL with persona
-  useEffect(() => {
-    if (effectivePersona) {
-      const params = new URLSearchParams(searchParams.toString());
-      params.set("role", effectivePersona);
-      router.push(`?${params.toString()}`, { scroll: false });
-    }
-  }, [effectivePersona, router, searchParams]);
-
-  const isParent = effectivePersona === "parent";
+  const isParent = role === "parent";
   const accent = isParent
-    ? { r: 255, g: 215, b: 0 }   // gold
-    : { r: 0, g: 245, b: 255 };   // cyan
+    ? { r: 255, g: 215, b: 0 } // gold
+    : { r: 0, g: 245, b: 255 }; // cyan
 
   const accentRgb = `${accent.r},${accent.g},${accent.b}`;
 
   const expectedRole: UserRole | undefined =
-    effectivePersona === "parent" ? "parent" : effectivePersona === "teen" ? "child" : undefined;
+    role === "parent" ? "parent" : role === "teen" ? "child" : undefined;
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
@@ -61,10 +42,25 @@ export function LoginScreen({ persona, onLogin, onBack }: LoginScreenProps) {
 
     const user = authenticate(username.trim(), password, expectedRole);
     if (user) {
-      onLogin(user);
+      // Store user in sessionStorage and redirect to appropriate dashboard
+      sessionStorage.setItem("finteiy-user", JSON.stringify(user));
+
+      if (user.role === "parent") {
+        router.push("/dashboard?role=parent");
+      } else if (user.isNew) {
+        // New child goes to onboarding
+        router.push("/?onboarding=true");
+      } else {
+        // Existing child goes to their dashboard
+        router.push("/dashboard?role=teen");
+      }
     } else {
       setError("Invalid username or password");
     }
+  };
+
+  const handleBack = () => {
+    router.push("/");
   };
 
   return (
@@ -72,7 +68,7 @@ export function LoginScreen({ persona, onLogin, onBack }: LoginScreenProps) {
       <div className="max-w-game w-full flex flex-col items-center">
         {/* Back link */}
         <button
-          onClick={onBack}
+          onClick={handleBack}
           className="self-start mb-8 text-xs text-text-muted hover:text-text-secondary transition-colors cursor-pointer flex items-center gap-1.5"
         >
           <span>{"\u2190"}</span> Back
@@ -92,7 +88,7 @@ export function LoginScreen({ persona, onLogin, onBack }: LoginScreenProps) {
 
         {/* Title */}
         <h1 className="text-[22px] font-extrabold font-sora text-text-primary mb-1 text-center">
-          {effectivePersona === "parent" ? "Parent Sign In" : effectivePersona === "teen" ? "Teen Sign In" : "Sign In"}
+          {role === "parent" ? "Parent Sign In" : role === "teen" ? "Teen Sign In" : "Sign In"}
         </h1>
         <p className="text-xs text-text-muted text-center mb-8">
           Enter your credentials to continue
@@ -121,7 +117,9 @@ export function LoginScreen({ persona, onLogin, onBack }: LoginScreenProps) {
                 e.currentTarget.style.boxShadow = `0 0 0 3px rgba(${accentRgb},0.08)`;
               }}
               onBlur={(e) => {
-                e.currentTarget.style.borderColor = error ? "rgba(239,68,68,0.4)" : "rgba(255,255,255,0.1)";
+                e.currentTarget.style.borderColor = error
+                  ? "rgba(239,68,68,0.4)"
+                  : "rgba(255,255,255,0.1)";
                 e.currentTarget.style.boxShadow = "none";
               }}
             />
@@ -148,16 +146,16 @@ export function LoginScreen({ persona, onLogin, onBack }: LoginScreenProps) {
                 e.currentTarget.style.boxShadow = `0 0 0 3px rgba(${accentRgb},0.08)`;
               }}
               onBlur={(e) => {
-                e.currentTarget.style.borderColor = error ? "rgba(239,68,68,0.4)" : "rgba(255,255,255,0.1)";
+                e.currentTarget.style.borderColor = error
+                  ? "rgba(239,68,68,0.4)"
+                  : "rgba(255,255,255,0.1)";
                 e.currentTarget.style.boxShadow = "none";
               }}
             />
           </div>
 
           {/* Error */}
-          {error && (
-            <p className="text-xs text-red-400 mt-1">{error}</p>
-          )}
+          {error && <p className="text-xs text-red-400 mt-1">{error}</p>}
 
           {/* Submit */}
           <button
