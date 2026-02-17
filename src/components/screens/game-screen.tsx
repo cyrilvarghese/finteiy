@@ -11,15 +11,16 @@ import { SurpriseEvent } from "@/components/surprise-event";
 import { Callout } from "@/components/callout";
 import { ActionButton } from "@/components/action-button";
 import { GameOverOverlay } from "@/components/game-over-overlay";
-import { type Goal, type GameState, clamp } from "@/lib/constants";
+import { type Goal, type GameState, type ConceptNumber, clamp } from "@/lib/constants";
 
 interface GameScreenProps {
   goal: Goal;
+  lessonId?: ConceptNumber;
   onEnd: (state: GameState) => void;
 }
 
-export function GameScreen({ goal, onEnd }: GameScreenProps) {
-  const { state, handleAction } = useGameEngine(goal, onEnd);
+export function GameScreen({ goal, lessonId, onEnd }: GameScreenProps) {
+  const { state, handleAction } = useGameEngine(goal, onEnd, lessonId);
   const inv = state.currentInvite;
   const goalPct = clamp((state.cash / goal.amount) * 100, 0, 100);
 
@@ -77,13 +78,15 @@ export function GameScreen({ goal, onEnd }: GameScreenProps) {
       <BorrowWarning visible={state.showBorrowWarning} />
 
       <div className="px-4 max-w-game mx-auto">
-        {/* Current invite */}
+        {/* Current invite - fades in after callout */}
         {inv && !state.gameOver && (
           <div
+            key={inv.id}
             className="mb-3 transition-all duration-300"
             style={{
               opacity: state.animatingAction ? 0.5 : 1,
               transform: state.animatingAction ? "scale(0.97)" : "scale(1)",
+              animation: "fadeIn 500ms cubic-bezier(0.34, 1.56, 0.64, 1)",
             }}
           >
             <InviteCard invite={inv} cash={state.cash} />
@@ -104,8 +107,8 @@ export function GameScreen({ goal, onEnd }: GameScreenProps) {
           </div>
         )}
 
-        {/* Action buttons */}
-        {!state.gameOver && (
+        {/* Action buttons - hidden when callout is showing */}
+        {!state.gameOver && !state.callout && (
           <div className="grid grid-cols-2 gap-2.5 pb-6">
             <ActionButton
               action="join"

@@ -8,7 +8,9 @@ import {
   type Invite,
   type Debt,
   type SurpriseEventData,
+  type ConceptNumber,
   INVITES,
+  LESSONS,
   SURPRISE_EVENTS,
   HUSTLES,
   CALLOUTS,
@@ -103,7 +105,8 @@ function doBorrow(
 
 export function useGameEngine(
   goal: Goal,
-  onEnd: (state: GameState) => void
+  onEnd: (state: GameState) => void,
+  lessonId?: ConceptNumber
 ) {
   const [state, setState] = useState<GameState>(createInitialState);
   const pendingEndRef = useRef(false);
@@ -123,7 +126,17 @@ export function useGameEngine(
       if (prev.cash >= goal.amount) {
         return { ...prev, gameOver: true, won: true, currentInvite: null };
       }
-      const inv = pick(INVITES);
+
+      // Filter invites based on lesson mode
+      let invitePool = INVITES;
+      if (lessonId !== undefined) {
+        const lesson = LESSONS.find(l => l.id === lessonId);
+        if (lesson) {
+          invitePool = INVITES.filter(inv => lesson.invitePool.includes(inv.id));
+        }
+      }
+
+      const inv = pick(invitePool);
       return {
         ...prev,
         currentInvite: { ...inv, cost: inv.cost + rand(-2, 4) },
@@ -134,7 +147,7 @@ export function useGameEngine(
         stats: { ...prev.stats, totalInvites: prev.stats.totalInvites + 1 },
       };
     });
-  }, [goal.amount]);
+  }, [goal.amount, lessonId]);
 
   // Generate first invite on mount
   useEffect(() => {
@@ -258,9 +271,9 @@ export function useGameEngine(
             }
           }
 
-          // Schedule next invite
+          // Schedule next invite (sync with callout duration)
           if (!n.gameOver) {
-            setTimeout(() => generateInvite(), 3500);
+            setTimeout(() => generateInvite(), 4500);
           }
 
           return n;

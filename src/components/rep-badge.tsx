@@ -4,9 +4,10 @@ import { getRepLevel, REP_LEVELS, type Collectible } from "@/lib/constants";
 
 interface RepBadgeProps {
   collection: Collectible[];
+  onOpenStash?: () => void;
 }
 
-export function RepBadge({ collection }: RepBadgeProps) {
+export function RepBadge({ collection, onOpenStash }: RepBadgeProps) {
   const rep = getRepLevel(collection);
   const next = rep.nextLevel;
   const progressToNext =
@@ -99,6 +100,28 @@ export function RepBadge({ collection }: RepBadgeProps) {
             {next.min - rep.points} XP to go
           </span>
         </div>
+      )}
+
+      {/* Your Stash button */}
+      {onOpenStash && (
+        <button
+          onClick={onOpenStash}
+          className="mt-2.5 w-full px-3 py-2 rounded-lg flex items-center justify-between cursor-pointer transition-all hover:bg-white/[0.04]"
+          style={{
+            background: "rgba(255,255,255,0.02)",
+            border: "1px solid rgba(255,255,255,0.06)",
+          }}
+        >
+          <div className="flex items-center gap-2">
+            <span className="text-base">🎁</span>
+            <span className="text-[12px] font-semibold text-text-secondary">Your Stash</span>
+          </div>
+          {collection.length > 0 && (
+            <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-energy/[0.15] text-energy font-space-mono font-bold">
+              {collection.length}
+            </span>
+          )}
+        </button>
       )}
     </div>
   );

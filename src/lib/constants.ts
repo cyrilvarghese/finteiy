@@ -44,6 +44,17 @@ export interface Invite {
   social: number;
 }
 
+export interface Lesson {
+  id: ConceptNumber;
+  icon: string;
+  title: string;
+  subtitle: string;
+  explanation: string;
+  exampleCallout: string;
+  focusGoalId: string;
+  invitePool: string[];
+}
+
 export interface SurpriseEventData {
   title: string;
   desc: string;
@@ -219,6 +230,41 @@ export const CALLOUTS: Record<string, string> = {
   social_tradeoff: "Being included has a cost. Pick which hangs are worth it.",
   surprise_hit: "Unexpected costs are part of life. Keep a cash buffer.",
 };
+
+// ─── LESSONS (LEARN MODE) ───────────────────────────────────────────────────
+
+export const LESSONS: Lesson[] = [
+  {
+    id: 1,
+    icon: "📊",
+    title: "Money Basics",
+    subtitle: "How money actually works",
+    explanation: "Borrowing can help you reach goals faster, but interest means you pay back more than you borrowed. This lesson teaches when debt is smart vs dangerous.",
+    exampleCallout: CALLOUTS.borrow_interest,
+    focusGoalId: "sneakers",
+    invitePool: ["movie", "mall", "bowling", "pizza"],
+  },
+  {
+    id: 2,
+    icon: "⏱️",
+    title: "Smart Spending",
+    subtitle: "Spend like a pro",
+    explanation: "Every time you spend, you're choosing between now and later. Skipping saves cash for your goal, but might hurt your social life. This lesson teaches balance.",
+    exampleCallout: CALLOUTS.skip_protected,
+    focusGoalId: "hoodie",
+    invitePool: ["arcade", "boba", "karaoke", "beach"],
+  },
+  {
+    id: 5,
+    icon: "👥",
+    title: "Money Mindset",
+    subtitle: "Balance social & financial goals",
+    explanation: "Life throws surprises. The best money mindset balances fun now with progress toward your goals. This lesson teaches how to stay on track while enjoying life.",
+    exampleCallout: CALLOUTS.surprise_hit,
+    focusGoalId: "airpods-case",
+    invitePool: ["movie", "mall", "escape-room", "bbq"],
+  },
+];
 
 // ─── TIER DISPLAY CONSTANTS ─────────────────────────────────────────────────
 

@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { type AppUser } from "@/lib/auth";
 import { ParentDashboard } from "@/components/screens/parent-dashboard";
 import { HomeScreen } from "@/components/screens/home-screen";
+import { LessonIntroScreen } from "@/components/screens/lesson-intro-screen";
 import { GameScreen } from "@/components/screens/game-screen";
 import { ReportCard } from "@/components/screens/report-card";
 import { ProfileMenu } from "@/components/profile-menu";
@@ -12,18 +13,20 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useCollection } from "@/hooks/use-collection";
 import {
   type Goal,
+  type Lesson,
   type Grade,
   type Collectible,
   type GameState,
   type GradeStats,
   type ConceptNumber,
   SAMPLE_COLLECTIBLES,
+  GOALS,
   clamp,
   getGrade,
   GRADE_TO_NUM,
 } from "@/lib/constants";
 
-type Screen = "home" | "game" | "report" | "profile";
+type Screen = "home" | "lessonIntro" | "game" | "report" | "profile";
 
 function DashboardContent() {
   const router = useRouter();
@@ -33,6 +36,7 @@ function DashboardContent() {
   const [currentUser, setCurrentUser] = useState<AppUser | null>(null);
   const [screen, setScreen] = useState<Screen>("home");
   const [goal, setGoal] = useState<Goal | null>(null);
+  const [lesson, setLesson] = useState<Lesson | null>(null);
   const [endState, setEndState] = useState<GameState | null>(null);
   const [gameKey, setGameKey] = useState(0);
 
@@ -83,9 +87,27 @@ function DashboardContent() {
   // ─── Game flow ────────────────────────────────────────────────────────
   const handleGoalSelect = useCallback((g: Goal) => {
     setGoal(g);
+    setLesson(null); // Clear lesson when selecting goal directly
     setScreen("game");
     setGameKey((k) => k + 1);
   }, []);
+
+  const handleLessonSelect = useCallback((l: Lesson) => {
+    setLesson(l);
+    setScreen("lessonIntro");
+  }, []);
+
+  const handleStartLesson = useCallback(() => {
+    if (lesson) {
+      // Auto-select goal based on lesson
+      const lessonGoal = GOALS.find((g) => g.id === lesson.focusGoalId);
+      if (lessonGoal) {
+        setGoal(lessonGoal);
+        setScreen("game");
+        setGameKey((k) => k + 1);
+      }
+    }
+  }, [lesson]);
 
   const handleGameEnd = useCallback(
     (state: GameState) => {
@@ -233,11 +255,25 @@ function DashboardContent() {
     );
   }
 
+  if (screen === "lessonIntro" && lesson) {
+    return (
+      <>
+        {profileOverlay}
+        <LessonIntroScreen lesson={lesson} onStartLesson={handleStartLesson} />
+      </>
+    );
+  }
+
   if (screen === "game" && goal) {
     return (
       <>
         {profileOverlay}
-        <GameScreen key={gameKey} goal={goal} onEnd={handleGameEnd} />
+        <GameScreen
+          key={gameKey}
+          goal={goal}
+          lessonId={lesson?.id}
+          onEnd={handleGameEnd}
+        />
       </>
     );
   }
@@ -262,6 +298,7 @@ function DashboardContent() {
       <HomeScreen
         collection={collection}
         onSelectGoal={handleGoalSelect}
+        onSelectLesson={handleLessonSelect}
         userId={currentUser?.id}
       />
     </>
