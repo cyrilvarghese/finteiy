@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { AppUser } from "@/lib/auth";
 import { useCollection } from "@/hooks/use-collection";
 import { useRewards } from "@/hooks/use-rewards";
+import { DashboardCard } from "@/components/dashboard-card";
 import {
   Select,
   SelectContent,
@@ -115,32 +116,12 @@ export function ParentDashboard({ user, onLogout }: ParentDashboardProps) {
 
         {/* Dashboard cards */}
         <div className="flex flex-col gap-4">
-          {/* 1. Active Goal Card - Prominent with gold accent */}
-          <div
-            className="rounded-2xl px-6 py-5"
-            style={{
-              background: "linear-gradient(135deg, rgba(255,215,0,0.06), rgba(255,215,0,0.02))",
-              border: "1.5px solid rgba(255,215,0,0.15)",
-              boxShadow: "0 0 20px rgba(255,215,0,0.08)",
-            }}
-          >
-            <div className="flex items-center gap-2.5 mb-3">
-              <div
-                className="w-10 h-10 rounded-xl flex items-center justify-center"
-                style={{
-                  background: "linear-gradient(145deg, rgba(255,215,0,0.2), rgba(255,215,0,0.08))",
-                  border: "1px solid rgba(255,215,0,0.25)",
-                }}
-              >
-                <span className="text-xl">{"\u{1F3AF}"}</span>
-              </div>
-              <h2 className="text-[16px] font-extrabold font-sora text-text-primary">Current Goal</h2>
-            </div>
+          {/* 1. Active Goal Card */}
+          <DashboardCard icon={"\u{1F3AF}"} title="Current Goal" variant="gold">
             <div className="text-xs text-text-muted mb-4">
               No active goal • Encourage them to start playing!
             </div>
 
-            {/* Send nudge button */}
             <button
               onClick={handleSendNudge}
               disabled={nudgeSent}
@@ -157,21 +138,10 @@ export function ParentDashboard({ user, onLogout }: ParentDashboardProps) {
             >
               {nudgeSent ? "✓ Nudge Sent!" : "📱 Send Nudge"}
             </button>
-          </div>
+          </DashboardCard>
 
-          {/* 2. Recent Achievements Card - Darker, cleaner */}
-          <div
-            className="rounded-xl px-5 py-4"
-            style={{
-              background: "rgba(0,0,0,0.25)",
-              border: "1px solid rgba(255,255,255,0.06)",
-            }}
-          >
-            <div className="flex items-center gap-2 mb-4">
-              <span className="text-xl">{"\u{1F3C6}"}</span>
-              <h2 className="text-[15px] font-bold font-sora text-text-primary">Recent Achievements</h2>
-            </div>
-
+          {/* 2. Recent Achievements Card */}
+          <DashboardCard icon={"\u{1F3C6}"} title="Recent Achievements" variant="dark">
             {recentAchievements.length === 0 ? (
               <div className="text-xs text-text-muted">No completed goals yet</div>
             ) : (
@@ -220,21 +190,10 @@ export function ParentDashboard({ user, onLogout }: ParentDashboardProps) {
                 })}
               </div>
             )}
-          </div>
+          </DashboardCard>
 
-          {/* 3. Learning Insights Card - Grid layout with cyan accents */}
-          <div
-            className="rounded-xl px-5 py-4"
-            style={{
-              background: "rgba(56,189,248,0.03)",
-              border: "1px dashed rgba(56,189,248,0.15)",
-            }}
-          >
-            <div className="flex items-center gap-2 mb-4">
-              <span className="text-xl">{"\u{1F4A1}"}</span>
-              <h2 className="text-[15px] font-bold font-sora text-text-primary">Learning Insights</h2>
-            </div>
-
+          {/* 3. Learning Insights Card */}
+          <DashboardCard icon={"\u{1F4A1}"} title="Learning Insights" variant="cyan">
             <div className="grid grid-cols-1 gap-2.5">
               {CONCEPTS.map((concept) => {
                 const { grade, status } = getConceptStatus(concept.id as ConceptNumber);
@@ -273,33 +232,15 @@ export function ParentDashboard({ user, onLogout }: ParentDashboardProps) {
                 );
               })}
             </div>
-          </div>
+          </DashboardCard>
 
-          {/* 4. Custom Rewards Card - Interactive with strong gold theme */}
-          <div
-            className="rounded-2xl px-5 py-5"
-            style={{
-              background: "linear-gradient(135deg, rgba(255,215,0,0.08), rgba(255,170,0,0.03))",
-              border: "1px solid rgba(255,215,0,0.2)",
-              boxShadow: "0 0 16px rgba(255,215,0,0.1)",
-            }}
+          {/* 4. Custom Rewards Card */}
+          <DashboardCard
+            icon={"\u{1F381}"}
+            title="Custom Rewards"
+            subtitle="Attach real-world surprises to goals"
+            variant="gold"
           >
-            <div className="flex items-center gap-2.5 mb-3">
-              <div
-                className="w-9 h-9 rounded-lg flex items-center justify-center"
-                style={{
-                  background: "rgba(255,215,0,0.15)",
-                }}
-              >
-                <span className="text-lg">{"\u{1F381}"}</span>
-              </div>
-              <div>
-                <h2 className="text-[15px] font-bold font-sora text-text-primary">Custom Rewards</h2>
-                <p className="text-[10px] text-text-muted leading-snug">
-                  Attach real-world surprises to goals
-                </p>
-              </div>
-            </div>
 
             {/* Add reward form */}
             <div className="flex flex-col gap-2 mb-4">
@@ -383,7 +324,7 @@ export function ParentDashboard({ user, onLogout }: ParentDashboardProps) {
                 })}
               </div>
             )}
-          </div>
+          </DashboardCard>
         </div>
       </div>
     </div>
