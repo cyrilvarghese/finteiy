@@ -64,7 +64,7 @@ const TUTORIAL_INVITES: Invite[] = [
   { id: "tutorial-headphones", type: "buy", title: "Headphones", desc: "New wireless headphones everyone's getting", cost: 25, energy: 0, social: 2 },
 ];
 
-type Step = "welcome" | "interests" | "goals" | "meters" | "actions" | "tutorial";
+type Step = "welcome" | "interests" | "goals" | "meters" | "actions" | "tutorial" | "ready";
 
 interface OnboardingPlaceholderProps {
   user: AppUser;
@@ -98,7 +98,7 @@ export function OnboardingPlaceholder({ user, onContinue }: OnboardingPlaceholde
 
   // Initialize step from URL param or default to "welcome"
   const urlStep = searchParams.get("step") as Step | null;
-  const validSteps: Step[] = ["welcome", "interests", "goals", "meters", "actions", "tutorial"];
+  const validSteps: Step[] = ["welcome", "interests", "goals", "meters", "actions", "tutorial", "ready"];
   const initialStep = urlStep && validSteps.includes(urlStep) ? urlStep : "welcome";
 
   const [step, setStep] = useState<Step>(initialStep);
@@ -120,6 +120,20 @@ export function OnboardingPlaceholder({ user, onContinue }: OnboardingPlaceholde
     params.set("step", step);
     router.push(`?${params.toString()}`, { scroll: false });
   }, [step, router, searchParams]);
+
+  // Auto-transition from "ready" step to dashboard
+  useEffect(() => {
+    if (step === "ready") {
+      const timer = setTimeout(() => {
+        onContinue({
+          interests: Array.from(selectedInterests),
+          styleProfile,
+          firstGoal: selectedGoal,
+        });
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [step, onContinue, selectedInterests, styleProfile, selectedGoal]);
 
   const toggleInterest = (id: string) => {
     setSelectedInterests((prev) => {
@@ -467,64 +481,226 @@ export function OnboardingPlaceholder({ user, onContinue }: OnboardingPlaceholde
   }
 
   // ─── Step 4: Introduce actions ───────────────────────────────────────
+  if (step === "actions") {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center px-6 py-10 font-dm-sans">
+        <div className="max-w-game w-full flex flex-col items-center">
+          <StepIndicator current={4} />
+
+          <h1 className="text-[22px] font-extrabold font-sora text-text-primary mb-2 text-center">
+            Choose your moves
+          </h1>
+          <p className="text-xs text-text-muted text-center mb-8 max-w-[280px] leading-relaxed">
+            Every day you get 3 actions. Here&apos;s what you can do:
+          </p>
+
+          {/* Action cards */}
+          <div className="w-full flex flex-col gap-3 mb-8">
+            <ActionCard
+              emoji={"\u{1F64B}"}
+              title="Join"
+              description="Spend full cost to attend. Boosts your social meter."
+              cashImpact={-14}
+            />
+            <ActionCard
+              emoji={"\u{1F91D}"}
+              title="Split"
+              description="Split the cost with a friend (half price). Still boosts social."
+              cashImpact={-7}
+            />
+            <ActionCard
+              emoji={"\u23ED\uFE0F"}
+              title="Skip"
+              description="Decline the invite. Save money but can hurt your social life."
+              cashImpact={0}
+            />
+            <ActionCard
+              emoji={"\u{1F4AA}"}
+              title="Earn / Hustle"
+              description="Do a side job to earn cash. No social boost, but money matters."
+              cashImpact={10}
+            />
+          </div>
+
+          {/* Continue */}
+          <button
+            onClick={() => setStep("tutorial")}
+            className="w-full max-w-[280px] py-3.5 rounded-xl text-[15px] font-bold font-sora cursor-pointer transition-all duration-200 btn-game"
+            style={{
+              background: "linear-gradient(135deg, rgba(0,245,255,0.2), rgba(56,189,248,0.1))",
+              border: "1px solid rgba(0,245,255,0.3)",
+              color: "#f1f5f9",
+            }}
+          >
+            Continue {"\u2192"}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ─── Step 5: Tutorial (sample invites) ───────────────────────────────
+  const currentInvite = TUTORIAL_INVITES[tutorialInviteIndex];
+
+  const handleTutorialAction = (action: "join" | "split" | "skip" | "earn") => {
+    let feedback = "";
+    let newCash = tutorialCash;
+    let newEnergy = tutorialEnergy;
+    let newSocial = tutorialSocial;
+
+    if (action === "join") {
+      newCash -= currentInvite.cost;
+      newEnergy -= currentInvite.energy;
+      newSocial += currentInvite.social;
+
+      if (tutorialCash < currentInvite.cost) {
+        feedback = "Careful! Joining without enough cash means you'll need to borrow. Try to keep a buffer.";
+      } else if (tutorialCash - currentInvite.cost < 20) {
+        feedback = "That left you pretty low on cash. Watch your balance!";
+      } else {
+        feedback = "Nice! You had enough cash and boosted your social meter.";
+      }
+    } else if (action === "split") {
+      const cost = Math.ceil(currentInvite.cost / 2);
+      newCash -= cost;
+      newEnergy -= currentInvite.energy;
+      newSocial += currentInvite.social;
+
+      feedback = "Smart! Splitting saves money while still staying connected.";
+    } else if (action === "skip") {
+      newEnergy -= 1;
+      newSocial -= 2;
+
+      if (tutorialSocial - 2 < 40) {
+        feedback = "Skipping saved cash, but your social meter is getting low. Balance is key!";
+      } else {
+        feedback = "Sometimes skipping is the right move to save money.";
+      }
+    } else if (action === "earn") {
+      if (tutorialEnergy < 1) {
+        feedback = "Oops! You don't have enough energy to hustle. Energy matters!";
+      } else {
+        newCash += 10;
+        newEnergy -= 1;
+        feedback = "Good hustle! You earned cash without spending on the invite.";
+      }
+    }
+
+    setTutorialCash(newCash);
+    setTutorialEnergy(newEnergy);
+    setTutorialSocial(newSocial);
+    setCalloutText(feedback);
+    setShowCallout(true);
+
+    // Auto-advance after callout
+    setTimeout(() => {
+      setShowCallout(false);
+      if (tutorialInviteIndex < TUTORIAL_INVITES.length - 1) {
+        setTutorialInviteIndex(tutorialInviteIndex + 1);
+      } else {
+        // Tutorial complete - go to ready screen
+        setStep("ready");
+      }
+    }, 4500);
+  };
+
+  // ─── Step 6: Ready / Let's Go! ───────────────────────────────────────
+  if (step === "ready") {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center px-6 py-10 font-dm-sans">
+        <div className="max-w-game w-full flex flex-col items-center">
+          <StepIndicator current={6} />
+
+          <div
+            className="text-[32px] font-extrabold font-sora text-text-primary text-center"
+            style={{
+              animation: "fadeIn 600ms ease-out",
+            }}
+          >
+            Let's go!! 🚀
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ─── Step 5: Tutorial (sample invites) ───────────────────────────────
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-6 py-10 font-dm-sans">
       <div className="max-w-game w-full flex flex-col items-center">
-        <StepIndicator current={4} />
+        <StepIndicator current={5} />
 
         <h1 className="text-[22px] font-extrabold font-sora text-text-primary mb-2 text-center">
-          Choose your moves
+          {tutorialInviteIndex === 0 ? "Let's practice!" : "One more!"}
         </h1>
-        <p className="text-xs text-text-muted text-center mb-8 max-w-[280px] leading-relaxed">
-          Every day you get 3 actions. Here&apos;s what you can do:
+        <p className="text-xs text-text-muted text-center mb-6 max-w-[280px] leading-relaxed">
+          {tutorialInviteIndex === 0
+            ? "Here's an invite. Pick an action and see what happens."
+            : "Try another one. Think about your meters before you choose."
+          }
         </p>
 
-        {/* Action cards */}
-        <div className="w-full flex flex-col gap-3 mb-8">
-          <ActionCard
-            emoji={"\u{1F64B}"}
-            title="Join"
-            description="Spend full cost to attend. Boosts your social meter."
-            cashImpact={-14}
+        {/* Tutorial meters */}
+        <div className="w-full grid grid-cols-2 gap-2.5 mb-5">
+          <MeterBar
+            label="Cash"
+            value={tutorialCash}
+            max={100}
+            color="#22c55e"
+            icon={"\u{1F4B5}"}
+            prefix="$"
           />
-          <ActionCard
-            emoji={"\u{1F91D}"}
-            title="Split"
-            description="Split the cost with a friend (half price). Still boosts social."
-            cashImpact={-7}
-          />
-          <ActionCard
-            emoji={"\u23ED\uFE0F"}
-            title="Skip"
-            description="Decline the invite. Save money but can hurt your social life."
-            cashImpact={0}
-          />
-          <ActionCard
-            emoji={"\u{1F4AA}"}
-            title="Earn / Hustle"
-            description="Do a side job to earn cash. No social boost, but money matters."
-            cashImpact={10}
+          <EnergyDots energy={tutorialEnergy} />
+          <MeterBar
+            label="Social"
+            value={tutorialSocial}
+            max={100}
+            color="#38bdf8"
+            icon={"\u{1F465}"}
           />
         </div>
 
-        {/* Continue */}
-        <button
-          onClick={() => {
-            onContinue({
-              interests: Array.from(selectedInterests),
-              styleProfile,
-              firstGoal: selectedGoal,
-            });
-          }}
-          className="w-full max-w-[280px] py-3.5 rounded-xl text-[15px] font-bold font-sora cursor-pointer transition-all duration-200 btn-game"
-          style={{
-            background: "linear-gradient(135deg, rgba(0,245,255,0.2), rgba(56,189,248,0.1))",
-            border: "1px solid rgba(0,245,255,0.3)",
-            color: "#f1f5f9",
-          }}
-        >
-          Continue {"\u2192"}
-        </button>
+        {/* Invite card */}
+        <div className="w-full mb-5">
+          <InviteCard invite={currentInvite} cash={tutorialCash} />
+        </div>
+
+        {/* Callout */}
+        {showCallout && (
+          <div className="w-full mb-5">
+            <Callout text={calloutText} duration={4500} />
+          </div>
+        )}
+
+        {/* Action buttons */}
+        {!showCallout && (
+          <div className="w-full flex flex-col gap-2">
+            <ActionButton
+              action="earn"
+              onClick={() => handleTutorialAction("earn")}
+              disabled={tutorialEnergy < 1}
+            />
+            <div className="grid grid-cols-2 gap-2">
+              <ActionButton
+                action="join"
+                cost={currentInvite.cost}
+                onClick={() => handleTutorialAction("join")}
+                disabled={tutorialEnergy < currentInvite.energy}
+              />
+              <ActionButton
+                action="split"
+                cost={currentInvite.cost}
+                onClick={() => handleTutorialAction("split")}
+                disabled={tutorialEnergy < currentInvite.energy}
+              />
+            </div>
+            <ActionButton
+              action="skip"
+              onClick={() => handleTutorialAction("skip")}
+              disabled={tutorialEnergy < 1}
+            />
+          </div>
+        )}
       </div>
     </div>
   );
