@@ -193,7 +193,7 @@ export function ParentDashboard({ user, onLogout }: ParentDashboardProps) {
           </DashboardCard>
 
           {/* 3. Learning Insights Card */}
-          <DashboardCard icon={"\u{1F4A1}"} title="Learning Insights" variant="cyan">
+          <DashboardCard icon={"\u{1F4A1}"} title="Learning Insights" variant="cyan" defaultOpen={false}>
             <div className="grid grid-cols-1 gap-2.5">
               {CONCEPTS.map((concept) => {
                 const { grade, status } = getConceptStatus(concept.id as ConceptNumber);
@@ -240,6 +240,7 @@ export function ParentDashboard({ user, onLogout }: ParentDashboardProps) {
             title="Custom Rewards"
             subtitle="Attach real-world surprises to goals"
             variant="gold"
+            defaultOpen={false}
           >
 
             {/* Add reward form */}
