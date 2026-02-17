@@ -7,7 +7,9 @@ import { HomeScreen } from "@/components/screens/home-screen";
 import { GameScreen } from "@/components/screens/game-screen";
 import { ReportCard } from "@/components/screens/report-card";
 import { ParentDashboard } from "@/components/screens/parent-dashboard";
-import { OnboardingPlaceholder } from "@/components/screens/onboarding-placeholder";
+import { OnboardingPlaceholder, type OnboardingData } from "@/components/screens/onboarding-placeholder";
+import { ProfileMenu } from "@/components/profile-menu";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useCollection } from "@/hooks/use-collection";
 import { type AppUser } from "@/lib/auth";
 import {
@@ -30,7 +32,8 @@ type Screen =
   | "game"
   | "report"
   | "onboarding"
-  | "parent-dashboard";
+  | "parent-dashboard"
+  | "profile";
 
 export default function Home() {
   const [screen, setScreen] = useState<Screen>("welcome");
@@ -91,8 +94,14 @@ export default function Home() {
     setScreen("welcome");
   }, []);
 
+  // ─── Profile ──────────────────────────────────────────────────────────
+  const handleProfile = useCallback(() => {
+    setScreen("profile");
+  }, []);
+
   // ─── Onboarding ───────────────────────────────────────────────────────
-  const handleOnboardingContinue = useCallback(() => {
+  const handleOnboardingContinue = useCallback((_data: OnboardingData) => {
+    // TODO: store onboarding data (gender, etc.) for personalisation
     setScreen("home");
   }, []);
 
@@ -172,33 +181,95 @@ export default function Home() {
     );
   }
 
+  // ─── All logged-in screens get the profile menu overlay ───────────────
+  const profileOverlay = currentUser ? (
+    <ProfileMenu
+      user={currentUser}
+      onProfile={handleProfile}
+      onLogout={handleLogout}
+    />
+  ) : null;
+
+  if (screen === "profile" && currentUser) {
+    return (
+      <>
+        {profileOverlay}
+        <div className="min-h-screen flex flex-col items-center justify-center px-6 py-10 font-dm-sans">
+          <div className="max-w-game w-full flex flex-col items-center">
+            <Avatar className="h-20 w-20 mb-4 border border-white/10">
+              <AvatarFallback className="bg-white/5 text-xl font-bold text-text-secondary font-space-mono">
+                {currentUser.displayName.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            <h1 className="text-[22px] font-extrabold font-sora text-text-primary mb-1">
+              {currentUser.displayName}
+            </h1>
+            <p className="text-xs text-text-muted font-space-mono mb-1">
+              @{currentUser.username}
+            </p>
+            <p className="text-xs text-text-muted mb-8 capitalize">
+              {currentUser.role}
+            </p>
+            <button
+              onClick={() => setScreen(currentUser.role === "parent" ? "parent-dashboard" : "home")}
+              className="text-sm text-text-secondary hover:text-text-primary transition-colors cursor-pointer"
+            >
+              {"\u2190"} Back
+            </button>
+          </div>
+        </div>
+      </>
+    );
+  }
+
   if (screen === "parent-dashboard" && currentUser) {
-    return <ParentDashboard user={currentUser} onLogout={handleLogout} />;
+    return (
+      <>
+        {profileOverlay}
+        <ParentDashboard user={currentUser} onLogout={handleLogout} />
+      </>
+    );
   }
 
   if (screen === "onboarding" && currentUser) {
     return (
-      <OnboardingPlaceholder
-        user={currentUser}
-        onContinue={handleOnboardingContinue}
-      />
+      <>
+        {profileOverlay}
+        <OnboardingPlaceholder
+          user={currentUser}
+          onContinue={handleOnboardingContinue}
+        />
+      </>
     );
   }
 
   if (screen === "game" && goal) {
-    return <GameScreen key={gameKey} goal={goal} onEnd={handleGameEnd} />;
+    return (
+      <>
+        {profileOverlay}
+        <GameScreen key={gameKey} goal={goal} onEnd={handleGameEnd} />
+      </>
+    );
   }
 
   if (screen === "report" && endState && goal) {
     return (
-      <ReportCard
-        gameState={endState}
-        goal={goal}
-        onRestart={handleRestart}
-        onNewGoal={handleNewGoal}
-      />
+      <>
+        {profileOverlay}
+        <ReportCard
+          gameState={endState}
+          goal={goal}
+          onRestart={handleRestart}
+          onNewGoal={handleNewGoal}
+        />
+      </>
     );
   }
 
-  return <HomeScreen collection={collection} onSelectGoal={handleGoalSelect} />;
+  return (
+    <>
+      {profileOverlay}
+      <HomeScreen collection={collection} onSelectGoal={handleGoalSelect} />
+    </>
+  );
 }

@@ -12,16 +12,12 @@ export function WelcomeScreen({ onSelect, onSignIn }: WelcomeScreenProps) {
     <div className="min-h-screen flex flex-col items-center justify-center px-6 py-10 font-dm-sans">
       <div className="max-w-game w-full flex flex-col items-center">
         {/* Logo */}
-        <div
-          className="w-16 h-16 rounded-2xl flex items-center justify-center mb-6"
-          style={{
-            background: "linear-gradient(145deg, rgba(0,245,255,0.15), rgba(0,245,255,0.05))",
-            border: "1px solid rgba(0,245,255,0.2)",
-            boxShadow: "0 0 30px rgba(0,245,255,0.1)",
-          }}
-        >
-          <span className="text-3xl">{"\u26A1"}</span>
-        </div>
+        <img
+          src="/logo.png"
+          alt="Finteiy mascot"
+          className="w-20 h-20 mb-6"
+          style={{ filter: "drop-shadow(0 0 20px rgba(0,245,255,0.15))" }}
+        />
 
         {/* Title */}
         <h1 className="text-[28px] font-extrabold font-sora text-text-primary mb-2 text-center">

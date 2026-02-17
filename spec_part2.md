@@ -88,9 +88,22 @@ Welcome Screen
 - Shows "Coming soon" cards for: Teen Progress Tracking, Goal History, Learning Insights
 - Sign Out button returns to Welcome Screen
 
-### Onboarding (Placeholder)
-- Shows "Welcome, {name}!" with a "Start Playing" button
-- Clicking "Start Playing" routes to the Home Screen (goal picker)
-- Full onboarding flow TBD
+### Onboarding Flow (6 steps)
+Multi-step onboarding for new children, triggered after clicking "Start Playing".
+
+**Step 0 — Welcome:** "Welcome, {name}!" with "Start Playing" button. Transitions to step 1.
+
+**Step 1 — Character Selection:** "Choose your character" with two avatar options (boy/girl emoji). Subtly captures gender to personalize goals, invites, and rewards. Selected card gets a colored border + glow (blue for boy, pink for girl). Continue button disabled until selection made.
+
+**Steps 2-6 — TBD:**
+2. Introduce goals
+3. Introduce meters (cash, energy, social, goal progress)
+4. Introduce actions (join, split, skip, earn)
+5. Play two sample invites (guided tutorial)
+6. Show available goals to start
+
+**Step indicator:** 6-dot progress bar at top of each step (active dot is wider + cyan).
+
+**Data exported:** `OnboardingData { gender: "boy" | "girl" | null }` — passed to `page.tsx` on completion for future personalization.
 
 ---

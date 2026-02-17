@@ -1,51 +1,436 @@
 "use client";
 
+import { useState } from "react";
 import type { AppUser } from "@/lib/auth";
+import { GOALS, type Goal } from "@/lib/constants";
+import { MeterBar } from "@/components/meter-bar";
+import { EnergyDots } from "@/components/energy-dots";
+
+// ─── Interest items with hidden gender weight ──────────────────────────────
+// weight > 0 leans feminine, weight < 0 leans masculine, 0 = neutral
+interface Interest {
+  id: string;
+  emoji: string;
+  label: string;
+  weight: number;
+}
+
+const INTERESTS: Interest[] = [
+  { id: "heels",      emoji: "\u{1F460}", label: "Fashion",       weight: 1 },
+  { id: "sneakers",   emoji: "\u{1F45F}", label: "Sneakers",      weight: -1 },
+  { id: "gaming",     emoji: "\u{1F3AE}", label: "Gaming",        weight: -1 },
+  { id: "jewelry",    emoji: "\u{1F48D}", label: "Jewelry",       weight: 1 },
+  { id: "music",      emoji: "\u{1F3B5}", label: "Music",         weight: 0 },
+  { id: "sports",     emoji: "\u26BD",    label: "Sports",        weight: -1 },
+  { id: "beauty",     emoji: "\u{1F485}", label: "Beauty",        weight: 1 },
+  { id: "tech",       emoji: "\u{1F4F1}", label: "Tech",          weight: 0 },
+  { id: "skateboard", emoji: "\u{1F6F9}", label: "Skateboarding", weight: -1 },
+  { id: "art",        emoji: "\u{1F3A8}", label: "Art",           weight: 0 },
+  { id: "cooking",    emoji: "\u{1F373}", label: "Cooking",       weight: 0 },
+  { id: "dance",      emoji: "\u{1F483}", label: "Dance",         weight: 1 },
+];
+
+export type StyleProfile = "feminine" | "masculine" | "neutral";
+
+export interface OnboardingData {
+  interests: string[];
+  styleProfile: StyleProfile;
+  firstGoal: Goal | null;
+}
+
+function deriveProfile(selected: string[]): StyleProfile {
+  const score = selected.reduce((sum, id) => {
+    const item = INTERESTS.find((i) => i.id === id);
+    return sum + (item?.weight ?? 0);
+  }, 0);
+  if (score >= 2) return "feminine";
+  if (score <= -2) return "masculine";
+  return "neutral";
+}
+
+// Show starter + medium goals for onboarding goal intro
+const ONBOARDING_GOALS = GOALS.filter(
+  (g) => g.tier === "Starter" || g.tier === "Medium",
+);
+
+type Step = "welcome" | "interests" | "goals" | "meters";
 
 interface OnboardingPlaceholderProps {
   user: AppUser;
-  onContinue: () => void;
+  onContinue: (data: OnboardingData) => void;
+}
+
+// ─── Step indicator ────────────────────────────────────────────────────────
+function StepIndicator({ current }: { current: number }) {
+  return (
+    <div className="flex items-center gap-1.5 mb-8">
+      {[1, 2, 3, 4, 5, 6].map((s) => (
+        <div
+          key={s}
+          className="h-1 rounded-full transition-all duration-300"
+          style={{
+            width: s <= current ? 24 : 8,
+            background:
+              s <= current
+                ? "rgba(0,245,255,0.6)"
+                : "rgba(255,255,255,0.08)",
+          }}
+        />
+      ))}
+    </div>
+  );
 }
 
 export function OnboardingPlaceholder({ user, onContinue }: OnboardingPlaceholderProps) {
+  const [step, setStep] = useState<Step>("welcome");
+  const [selectedInterests, setSelectedInterests] = useState<Set<string>>(new Set());
+  const [selectedGoal, setSelectedGoal] = useState<Goal | null>(null);
+  const [styleProfile, setStyleProfile] = useState<StyleProfile>("neutral");
+
+  const toggleInterest = (id: string) => {
+    setSelectedInterests((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  // ─── Step 0: Welcome ─────────────────────────────────────────────────
+  if (step === "welcome") {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center px-6 py-10 font-dm-sans">
+        <div className="max-w-game w-full flex flex-col items-center">
+          <div
+            className="w-16 h-16 rounded-2xl flex items-center justify-center mb-6"
+            style={{
+              background: "linear-gradient(145deg, rgba(0,245,255,0.15), rgba(0,245,255,0.05))",
+              border: "1px solid rgba(0,245,255,0.2)",
+              boxShadow: "0 0 30px rgba(0,245,255,0.1)",
+            }}
+          >
+            <span className="text-3xl">{"\u{1F3AE}"}</span>
+          </div>
+
+          <h1 className="text-[28px] font-extrabold font-sora text-text-primary mb-2 text-center">
+            Welcome, {user.displayName}!
+          </h1>
+          <p className="text-sm text-text-secondary text-center mb-2">
+            You&apos;re new here &mdash; let&apos;s get you started.
+          </p>
+          <p className="text-xs text-text-muted text-center mb-8 max-w-[280px] leading-relaxed">
+            We&apos;ll set up your profile in a few quick steps, then you can
+            jump into the game!
+          </p>
+
+          <button
+            onClick={() => setStep("interests")}
+            className="px-8 py-3.5 rounded-xl text-[15px] font-bold font-sora cursor-pointer transition-all duration-200 btn-game"
+            style={{
+              background: "linear-gradient(135deg, rgba(0,245,255,0.2), rgba(56,189,248,0.1))",
+              border: "1px solid rgba(0,245,255,0.3)",
+              color: "#f1f5f9",
+            }}
+          >
+            Start Playing {"\u2192"}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ─── Step 1: Interest picker ─────────────────────────────────────────
+  if (step === "interests") {
+    const hasEnough = selectedInterests.size >= 3;
+
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center px-6 py-10 font-dm-sans">
+        <div className="max-w-game w-full flex flex-col items-center">
+          <StepIndicator current={1} />
+
+          <h1 className="text-[22px] font-extrabold font-sora text-text-primary mb-2 text-center">
+            What are you into?
+          </h1>
+          <p className="text-xs text-text-muted text-center mb-8 max-w-[260px] leading-relaxed">
+            Pick at least 3. We&apos;ll use these to personalize your goals and
+            rewards.
+          </p>
+
+          <div className="grid grid-cols-3 gap-2.5 w-full mb-8">
+            {INTERESTS.map((item) => {
+              const isSelected = selectedInterests.has(item.id);
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => toggleInterest(item.id)}
+                  className="flex flex-col items-center gap-1.5 rounded-xl py-3.5 px-2 cursor-pointer transition-all duration-200"
+                  style={{
+                    background: isSelected
+                      ? "linear-gradient(145deg, rgba(0,245,255,0.1), rgba(56,189,248,0.04))"
+                      : "rgba(255,255,255,0.03)",
+                    border: isSelected
+                      ? "1.5px solid rgba(0,245,255,0.35)"
+                      : "1.5px solid rgba(255,255,255,0.06)",
+                    boxShadow: isSelected
+                      ? "0 0 12px rgba(0,245,255,0.08)"
+                      : "none",
+                  }}
+                >
+                  <span className="text-2xl">{item.emoji}</span>
+                  <span
+                    className="text-[11px] font-medium transition-colors duration-200"
+                    style={{
+                      color: isSelected
+                        ? "rgba(0,245,255,0.85)"
+                        : "rgba(148,163,184,0.6)",
+                    }}
+                  >
+                    {item.label}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
+          <p
+            className="text-[11px] font-space-mono mb-4 transition-colors duration-200"
+            style={{
+              color: hasEnough ? "rgba(0,245,255,0.6)" : "rgba(100,116,139,0.6)",
+            }}
+          >
+            {selectedInterests.size}/3 selected{hasEnough && " \u2714"}
+          </p>
+
+          <button
+            onClick={() => {
+              if (hasEnough) {
+                const profile = deriveProfile(Array.from(selectedInterests));
+                setStyleProfile(profile);
+                setStep("goals");
+              }
+            }}
+            disabled={!hasEnough}
+            className="w-full max-w-[280px] py-3.5 rounded-xl text-[15px] font-bold font-sora cursor-pointer transition-all duration-200 btn-game disabled:opacity-30 disabled:cursor-not-allowed"
+            style={{
+              background: "linear-gradient(135deg, rgba(0,245,255,0.2), rgba(56,189,248,0.1))",
+              border: "1px solid rgba(0,245,255,0.3)",
+              color: "#f1f5f9",
+            }}
+          >
+            Continue {"\u2192"}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ─── Step 2: Goal introduction ───────────────────────────────────────
+  if (step === "goals") {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center px-6 py-10 font-dm-sans">
+        <div className="max-w-game w-full flex flex-col items-center">
+          <StepIndicator current={2} />
+
+          {/* Mascot */}
+          <div
+            className="w-14 h-14 rounded-2xl flex items-center justify-center mb-5"
+            style={{
+              background: "linear-gradient(145deg, rgba(34,197,94,0.15), rgba(34,197,94,0.05))",
+              border: "1px solid rgba(34,197,94,0.2)",
+            }}
+          >
+            <span className="text-2xl">{"\u{1F3AF}"}</span>
+          </div>
+
+          <h1 className="text-[22px] font-extrabold font-sora text-text-primary mb-2 text-center">
+            Pick a savings goal
+          </h1>
+          <p className="text-xs text-text-muted text-center mb-6 max-w-[260px] leading-relaxed">
+            You can save up for cool things. Pick one you&apos;d love to own
+            &mdash; you&apos;ll work toward it in the game!
+          </p>
+
+          {/* Scrollable goal list */}
+          <div className="w-full flex flex-col gap-2.5 mb-8 max-h-[320px] overflow-y-auto pr-1">
+            {ONBOARDING_GOALS.map((goal) => {
+              const isSelected = selectedGoal?.id === goal.id;
+              return (
+                <button
+                  key={goal.id}
+                  onClick={() => setSelectedGoal(goal)}
+                  className="w-full flex items-center gap-3.5 rounded-xl px-4 py-3 text-left cursor-pointer transition-all duration-200"
+                  style={{
+                    background: isSelected
+                      ? `linear-gradient(135deg, ${goal.color}15, ${goal.color}08)`
+                      : "rgba(255,255,255,0.03)",
+                    border: isSelected
+                      ? `1.5px solid ${goal.color}55`
+                      : "1.5px solid rgba(255,255,255,0.06)",
+                    boxShadow: isSelected
+                      ? `0 0 16px ${goal.color}15`
+                      : "none",
+                  }}
+                >
+                  <div
+                    className="w-10 h-10 rounded-lg flex items-center justify-center text-lg shrink-0"
+                    style={{
+                      background: isSelected
+                        ? `linear-gradient(145deg, ${goal.color}22, ${goal.color}0a)`
+                        : "rgba(255,255,255,0.04)",
+                      border: `1px solid ${isSelected ? `${goal.color}33` : "rgba(255,255,255,0.06)"}`,
+                    }}
+                  >
+                    {goal.emoji}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div
+                      className="text-[13px] font-bold font-sora transition-colors duration-200"
+                      style={{
+                        color: isSelected ? goal.color : "#e2e8f0",
+                      }}
+                    >
+                      {goal.name}
+                    </div>
+                    <div className="text-[11px] text-text-muted font-space-mono">
+                      ${goal.amount} &middot; {goal.tier}
+                    </div>
+                  </div>
+                  {isSelected && (
+                    <div
+                      className="text-xs font-bold shrink-0"
+                      style={{ color: goal.color }}
+                    >
+                      {"\u2713"}
+                    </div>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Continue */}
+          <button
+            onClick={() => {
+              if (selectedGoal) {
+                setStep("meters");
+              }
+            }}
+            disabled={!selectedGoal}
+            className="w-full max-w-[280px] py-3.5 rounded-xl text-[15px] font-bold font-sora cursor-pointer transition-all duration-200 btn-game disabled:opacity-30 disabled:cursor-not-allowed"
+            style={{
+              background: "linear-gradient(135deg, rgba(0,245,255,0.2), rgba(56,189,248,0.1))",
+              border: "1px solid rgba(0,245,255,0.3)",
+              color: "#f1f5f9",
+            }}
+          >
+            Continue {"\u2192"}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ─── Step 3: Introduce meters ────────────────────────────────────────
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-6 py-10 font-dm-sans">
       <div className="max-w-game w-full flex flex-col items-center">
-        {/* Icon */}
-        <div
-          className="w-16 h-16 rounded-2xl flex items-center justify-center mb-6"
-          style={{
-            background: "linear-gradient(145deg, rgba(0,245,255,0.15), rgba(0,245,255,0.05))",
-            border: "1px solid rgba(0,245,255,0.2)",
-            boxShadow: "0 0 30px rgba(0,245,255,0.1)",
-          }}
-        >
-          <span className="text-3xl">{"\u{1F3AE}"}</span>
+        <StepIndicator current={3} />
+
+        <h1 className="text-[22px] font-extrabold font-sora text-text-primary mb-2 text-center">
+          Track your progress
+        </h1>
+        <p className="text-xs text-text-muted text-center mb-8 max-w-[280px] leading-relaxed">
+          Keep an eye on these 4 meters. They show how you&apos;re doing in the game.
+        </p>
+
+        {/* Meter demos in 2x2 grid */}
+        <div className="w-full grid grid-cols-2 gap-3 mb-8">
+          <MeterBar
+            label="Cash"
+            value={150}
+            max={300}
+            color="#22c55e"
+            icon={"\u{1F4B5}"}
+            prefix="$"
+          />
+          <EnergyDots energy={2} />
+          <MeterBar
+            label="Social"
+            value={60}
+            max={100}
+            color="#38bdf8"
+            icon={"\u{1F465}"}
+          />
+          <MeterBar
+            label="Goal"
+            value={150}
+            max={300}
+            color={selectedGoal?.color || "#a855f7"}
+            icon={"\u{1F3AF}"}
+            prefix="$"
+          />
         </div>
 
-        {/* Title */}
-        <h1 className="text-[28px] font-extrabold font-sora text-text-primary mb-2 text-center">
-          Welcome, {user.displayName}!
-        </h1>
-        <p className="text-sm text-text-secondary text-center mb-2">
-          You&apos;re new here &mdash; let&apos;s get you started.
-        </p>
-        <p className="text-xs text-text-muted text-center mb-8 max-w-[280px] leading-relaxed">
-          The onboarding experience is being designed. For now, jump straight
-          into the game!
-        </p>
+        {/* Explanations */}
+        <div className="w-full flex flex-col gap-2.5 mb-8">
+          <div className="flex gap-2.5 text-left">
+            <div className="text-lg shrink-0">{"\u{1F4B5}"}</div>
+            <div>
+              <div className="text-[13px] font-bold text-text-primary font-sora">Cash</div>
+              <div className="text-[11px] text-text-muted leading-relaxed">
+                Your money. Earn it, save it, spend it wisely.
+              </div>
+            </div>
+          </div>
+          <div className="flex gap-2.5 text-left">
+            <div className="text-lg shrink-0">{"\u26A1"}</div>
+            <div>
+              <div className="text-[13px] font-bold text-text-primary font-sora">Energy</div>
+              <div className="text-[11px] text-text-muted leading-relaxed">
+                You get 3 per day. Each action costs energy.
+              </div>
+            </div>
+          </div>
+          <div className="flex gap-2.5 text-left">
+            <div className="text-lg shrink-0">{"\u{1F465}"}</div>
+            <div>
+              <div className="text-[13px] font-bold text-text-primary font-sora">Social</div>
+              <div className="text-[11px] text-text-muted leading-relaxed">
+                Stay connected. Skipping hangs can hurt your social life.
+              </div>
+            </div>
+          </div>
+          <div className="flex gap-2.5 text-left">
+            <div className="text-lg shrink-0">{"\u{1F3AF}"}</div>
+            <div>
+              <div className="text-[13px] font-bold text-text-primary font-sora">Goal Progress</div>
+              <div className="text-[11px] text-text-muted leading-relaxed">
+                How close you are to winning your goal.
+              </div>
+            </div>
+          </div>
+        </div>
 
-        {/* CTA */}
+        {/* Continue */}
         <button
-          onClick={onContinue}
-          className="px-8 py-3.5 rounded-xl text-[15px] font-bold font-sora cursor-pointer transition-all duration-200 btn-game"
+          onClick={() => {
+            onContinue({
+              interests: Array.from(selectedInterests),
+              styleProfile,
+              firstGoal: selectedGoal,
+            });
+          }}
+          className="w-full max-w-[280px] py-3.5 rounded-xl text-[15px] font-bold font-sora cursor-pointer transition-all duration-200 btn-game"
           style={{
             background: "linear-gradient(135deg, rgba(0,245,255,0.2), rgba(56,189,248,0.1))",
             border: "1px solid rgba(0,245,255,0.3)",
             color: "#f1f5f9",
           }}
         >
-          Start Playing {"\u2192"}
+          Continue {"\u2192"}
         </button>
       </div>
     </div>
